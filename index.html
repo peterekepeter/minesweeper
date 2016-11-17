@@ -15,13 +15,16 @@
 				border-right-color: #888;
 				background: #bbb;
 				color: #bbb;
-				min-width: 1em;
-				min-height: 1em;
+				min-width: 1.4em;
+				min-height: 1.4em;
+				max-width: 1.4em;
+				max-height: 1.4em;
 				margin:0;
 				cursor: pointer;
 				text-align:center;
 				font-weight:bold;
 				user-select:none;
+				padding:0px;
 			}
 			td:active{
 				border-bottom-color: #eee;
@@ -47,13 +50,13 @@
 				z-index: -100000;
 			}
 			td.revealed.bomb{
-				border: 2px solid #c44;
-				background: #c44;
-				color: #fff;
+				border: 2px solid #c64;
+				background: #c64;
+				color: #000;
 			}
 			td.revealed.bomb.flagged{
-				border: 2px solid #4c4;
-				background: #4c4;
+				border: 2px solid #6c4;
+				background: #6c4;
 			}
 			td.revealed.n1{color:#008}
 			td.revealed.n2{color:#088}
@@ -160,9 +163,6 @@
 							cell.addEventListener('click', function(event){
 								flag(x,y);
 							})
-							cell.addEventListener('dblclick', function(event){
-								reveal(x,y);
-							})
 							cell.oncontextmenu = function(event){
 								reveal(x,y);
 								return false;
@@ -228,7 +228,7 @@
 			render(true);
 		}
 		
-		init(30,20,0.05);
+		init(32,16,0.1);
 		render();
 		
 	</script>
