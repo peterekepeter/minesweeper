@@ -69,7 +69,24 @@
 		</style>
 	</head>
 	<body>
-		<table id="game"></table>
+		<p>
+			<strong>Minesweeper</strong>
+			<label><span>width</span><input id="width" value="32"></input></label>
+			<label><span>height</span><input id="height" value="16"></input></label>
+			<label><span>bomb chance</span><input id="bomb-chance" value="0.1"></input></label>
+			<button id="action-reset">reset</button>
+		</p>
+		<p>
+			<table id="game"></table>
+		</p>
+		<p>
+			<ul>
+				<li>Right click to reveal. (use long press on mobile)
+				<li>Left click to flag.
+				<li>Left clicking revealed will open neighbours if there are enough flagged neighbours
+				<li>If you reveal a bomb it's game over
+				<li>Flag all bombs without revealing them
+		</p>
 	<body>
 	<script>
 		var gameElement = document.querySelector('#game');
@@ -228,8 +245,22 @@
 			render(true);
 		}
 		
-		init(32,16,0.1);
-		render();
+		function reset(){
+			var width = Number(document.querySelector("#width").value);
+			document.querySelector("#width").value = width;
+			var height = Number(document.querySelector("#height").value);
+			document.querySelector("#height").value = height;
+			var chance = Number(document.querySelector("#bomb-chance").value);
+			document.querySelector("#bomb-chance").value = chance;
+			init(width,height,chance);
+			render();
+		}
+		
+		document.querySelector("#action-reset").addEventListener('click', function(event){
+			reset();
+		});
+		
+		reset();
 		
 	</script>
 <html>
