@@ -180,6 +180,9 @@
 							cell.addEventListener('click', function(event){
 								flag(x,y);
 							})
+							cell.addEventListener('dblclick', function(event){
+								reveal(x,y);
+							});
 							cell.oncontextmenu = function(event){
 								reveal(x,y);
 								return false;
