@@ -1,0 +1,411 @@
+<html>
+<head>
+    <title>Tetris</title>
+    <style>
+        .tetris {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-content: center;
+            text-align: center;
+        }
+         .game {
+             min-width: 100px;
+             min-height: 100px;
+             /*border: 1px solid black;*/
+         }
+        .stats {
+            min-width: 100px;
+            min-height: 100px;
+            /*border: 1px solid black;*/
+        }
+        .game>b {
+            display: inline-block;
+            min-width: 10px;
+            min-height: 10px;
+            background: black;
+            position: absolute;
+            box-shadow: 0px 1px 8px rgba(0,0,0,0.5),  0px 1px 2px rgba(0,0,0,0.6);
+            transition: top 0.05s linear, left 0.05s linear
+        }
+        h1 {
+            font-family: Impact;
+            font-weight: normal;
+        }
+        p {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+<!--<h1>Cime a cuccnak</h1>
+<p>A piros roka csokoladet szar. A piros roka csokoladet szar.A piros roka csokoladet szar.A piros roka csokoladet szar.A piros roka csokoladet szar.s </p>
+<p>A piros roka csokoladet szar. A piros roka csokoladet szar.A piros roka csokoladet szar.A piros roka csokoladet szar.A piros roka csokoladet szar.s </p>
+    -->
+<div class="tetris">
+    <div class="game"></div>
+    <div class="stats"></div>
+</div>
+<script>
+
+    function mapGet(game, x, y) {
+        return game.map[y * game.cellsWidth + x];
+    }
+
+    function mapSet(game, x, y, value) {
+        game.map[y * game.cellsWidth + x] = value;
+    }
+
+    function stepCell(game, cell) {
+        cell.lx = cell.x;
+        cell.ly = cell.y;
+        if (cell.active > 0) {
+            if (canMoveCell(game, cell, 0, 1)) {
+                moveCell(game, cell, 0, 1);
+                cell.active--;
+                return false; // no collision
+            } else {
+                cell.active = 0;
+                return true; // collision
+            }
+        }
+        return false;
+    }
+   
+    function moveCell(game, cell, dx, dy) {
+        mapSet(game, cell.x, cell.y, false);
+        cell.x += dx;
+        cell.y += dy;
+        mapSet(game, cell.x, cell.y, true);
+    }
+
+    function canMoveCell(game, cell, dx, dy) {
+        var nx = cell.x + dx;
+        var ny = cell.y + dy;
+        if (nx < 0 || nx >= game.cellsWidth || ny < 0 || ny >= game.cellsHeight) return false;
+        if (mapGet(game, nx, ny)) return false;
+        return true;
+    }
+
+    function cellUndoLastMove(game, cell) {
+        mapSet(game, cell.x, cell.y, false);
+        cell.x = cell.lx;
+        cell.y = cell.ly;
+        mapSet(game, cell.x, cell.y, true);
+    }
+
+    function stepGame(game) {
+        var cells = game.cells;
+        cells.sort(function(a, b) {
+            return b.y - a.y;
+        });
+        var collision = false, i, generateNext = false;
+        for (i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            collision |= stepCell(game, cells[i]);
+        }
+        if (collision) {
+            for (i = 0; i < cells.length; i++) {
+                cellUndoLastMove(game, cells[i]);
+                cells[i].active = 0;
+            }
+            generateNext = true;
+            clearFilledRows(game);
+        } else {
+            game.rotationCenterY += 1;
+        }
+        if (generateNext) {
+            createRandomShape(game);
+        }
+    }
+
+    function clearFilledRows(game) {
+        var counters = [], i;
+        for (i = 0; i < game.cells.length; i++) {
+            var cell = game.cells[i];
+            var y = cell.y;
+            if (counters[y] == null) {
+                counters[y] = 1;
+            } else {
+                counters[y] += 1;
+            }
+        }
+        for (i = 0; i < counters.length; i++) {
+            if (counters[i] === game.cellsWidth) {
+                clearRow(game,i);
+            }
+        }
+    }
+
+    function clearRow(game, row) {
+        var i = 0;
+        while (i<game.cells.length) {
+            var cell = game.cells[i];
+            if (cell.y < row) {
+                cell.active += 1;
+            }
+            if (cell.y === row) {
+                game.cells.splice(i, 1);
+                mapSet(game, cell.x, cell.y, false);
+                if (cell.view != null) {
+                    cell.view.parentElement.removeChild(cell.view);
+                    cell.view = null;
+                }
+            } else {
+                i++;
+            }
+        }
+    }
+
+    function createCell(game, x, y) {
+        if (mapGet(game, x, y)) {
+            return;
+        }
+        var r = Math.random() * 179 + 20;
+        var g = Math.random() * 179 + 20;
+        var b = Math.random() * 179 + 20;
+        r += g * 0.2;
+        g += b * 0.2;
+        b += r * 0.2;
+        r = Math.floor(r);
+        g = Math.floor(g);
+        b = Math.floor(b);
+        var object = {
+            x: x,
+            y: y,
+            lx: x,
+            ly: y,
+            view: null,
+            active: game.cellsHeight - y + 1,
+            color: {
+                r: Math.floor(Math.random() * 255),
+                g: Math.floor(Math.random() * 255),
+                b: Math.floor(Math.random() * 255)
+            }
+        }
+        mapSet(game, x, y, true);
+        game.cells.push(object);
+    }
+
+    function generate(width, height) {
+        var object = {
+            cells: [],
+            cellsWidth: width,
+            cellsHeight: height,
+            map: [],
+            speed: 500,
+            timeout: null,
+            rotationCenterX: 0,
+            rotationCenterY: 0
+        }
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                object.map.push(false);
+            }
+        }
+        return object;
+    }
+
+    function renderCell(cell) {
+        if (cell.view == null) {
+            cell.view = document.createElement('b');
+            var container = document.querySelector('.tetris>.game');
+            container.appendChild(cell.view);
+            cell.view.style.background = 'rgb(' + cell.color.r + ',' + cell.color.g + ',' + cell.color.b + ')';
+        }
+        cell.view.style.left = cell.x * 10;
+        cell.view.style.top = cell.y * 10;
+    }
+
+    function renderGame(game) {
+        for (var i = 0; i < game.cells.length; i++) {
+            renderCell(game.cells[i]);
+        }
+    }
+
+    function gameLoop(game) {
+        stepGame(game);
+        renderGame(game);
+        game.timeout = setTimeout(gameLoop.bind(undefined, game), 500);
+    }
+    
+    function playerRotate(game) {
+        var i, cell;
+        var cx = game.rotationCenterX;
+        var cy = game.rotationCenterY;
+        for (i = 0; i < game.cells.length; i++) {
+            cell = game.cells[i];
+            cell.lx = cell.x;
+            cell.ly = cell.y;
+            if (cell.active > 0) {
+                var nx = cell.x - cx;
+                var ny = cell.y - cy;
+                var rx = ny + cx;
+                var ry = -nx + cy;
+                cell.dx = Math.round(rx - cell.x);
+                cell.dy = Math.round(ry - cell.y);
+                mapSet(game, cell.x, cell.y, false);
+            }
+        }
+        var collision = false;
+        for (i = 0; i < game.cells.length; i++) {
+            cell = game.cells[i];
+            if (cell.active > 0) {
+                if (!canMoveCell(game, cell, cell.dx, cell.dy)) {
+                    collision = true;
+                }
+            }
+        }
+        if (!collision) {
+            for (i = 0; i < game.cells.length; i++) {
+                cell = game.cells[i];
+                if (cell.active > 0) {
+                    moveCell(game, cell, cell.dx, cell.dy);
+                    cell.dx = 0;
+                    cell.dy = 0;
+                }
+            }
+        }
+    } 
+    
+    function playerMove(game, dx, dy) {
+        var collision = false;
+        var cell, i;
+        for (i = 0; i < game.cells.length; i++) {
+            cell = game.cells[i];
+            cell.lx = cell.x;
+            cell.ly = cell.y;
+            if (cell.active > 0) {
+                if (canMoveCell(game, cell, dx, dy)) {
+                    moveCell(game, cell, dx, dy);
+                } else {
+                    collision = true;
+                }
+            }
+        }
+        if (collision === true) {
+            for (i = 0; i < game.cells.length; i++) {
+                cell = game.cells[i];
+                cellUndoLastMove(game, cell);
+            }
+        } else {
+            game.rotationCenterX += dx;
+            game.rotationCenterY += dy;
+        }
+    }
+
+    function playerMoveLeft(game) {
+        game.cells.sort(function(a, b) {
+            return a.x - b.x;
+        });
+        playerMove(game, -1, 0);
+    }
+
+    function playerMoveRight(game) {
+        game.cells.sort(function (a, b) {
+            return b.x - a.x;
+        });
+        playerMove(game, +1, 0);
+    }
+
+    function playerSpeedup(game) {
+        clearTimeout(game.timeout);
+        gameLoop(game);
+    }
+
+    function createRandomShape(game) {
+        var x = Math.floor(game.cellsWidth / 2);
+        var type = Math.floor(Math.random() * 7);
+        switch(type) {
+            case 0: // I type
+                createCell(game, x, 0);
+                createCell(game, x, 1);
+                createCell(game, x, 2);
+                createCell(game, x, 3);
+                game.rotationCenterX = x + 0.5;
+                game.rotationCenterY = 1.5;
+                break;
+            case 1: // O type 
+                createCell(game, x, 0);
+                createCell(game, x, 1);
+                createCell(game, x + 1, 0);
+                createCell(game, x + 1, 1);
+                game.rotationCenterX = x + 0.5;
+                game.rotationCenterY = 0.5;
+                break;
+            case 2: // S type
+                createCell(game, x, 0);
+                createCell(game, x + 1, 0);
+                createCell(game, x, 1);
+                createCell(game, x - 1, 1);
+                game.rotationCenterX = x;
+                game.rotationCenterY = 0.5;
+                break;
+            case 3: // Z type
+                createCell(game, x, 0);
+                createCell(game, x - 1, 0);
+                createCell(game, x, 1);
+                createCell(game, x + 1, 1);
+                game.rotationCenterX = x;
+                game.rotationCenterY = 0.5;
+                break;
+            case 4: // L type
+                createCell(game, x, 0);
+                createCell(game, x, 1);
+                createCell(game, x, 2);
+                createCell(game, x + 1, 2);
+                game.rotationCenterX = x;
+                game.rotationCenterY = 1;
+                break;
+            case 5: // J type
+                createCell(game, x, 0);
+                createCell(game, x, 1);
+                createCell(game, x, 2);
+                createCell(game, x - 1, 2);
+                game.rotationCenterX = x;
+                game.rotationCenterY = 1;
+                break;
+            case 6: // T type
+                createCell(game, x, 0);
+                createCell(game, x + 1, 0);
+                createCell(game, x - 1, 0);
+                createCell(game, x, 1);
+                game.rotationCenterX = x;
+                game.rotationCenterY = 0;
+                break;
+        }
+    }
+
+    var game = generate(9, 21);
+    createRandomShape(game);
+    gameLoop(game);
+
+    document.body.addEventListener('keydown', function (event) {
+        var processedEvent = false;
+        switch (event.keyCode) {
+            case 38: //ArrowUp
+                playerRotate(game);
+                processedEvent = true;
+                break;
+            case 37: //ArrowLeft
+                playerMoveLeft(game);
+                processedEvent = true;
+                break;
+            case 39: //ArrowRight
+                playerMoveRight(game);
+                processedEvent = true;
+                break;
+            case 40: //Down
+                playerSpeedup(game);
+                processedEvent = true;
+                break;
+        };
+        if (processedEvent) {
+            event.stopPropagation();
+            renderGame(game);
+        }
+    });
+
+</script>
+</body>
+</html>
