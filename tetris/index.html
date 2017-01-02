@@ -21,8 +21,8 @@
         }
         .game>b {
             display: inline-block;
-            min-width: 10px;
-            min-height: 10px;
+            min-width: 20px;
+            min-height: 20px;
             background: black;
             position: absolute;
             box-shadow: 0px 1px 8px rgba(0,0,0,0.5),  0px 1px 2px rgba(0,0,0,0.6);
@@ -218,8 +218,8 @@
             container.appendChild(cell.view);
             cell.view.style.background = 'rgb(' + cell.color.r + ',' + cell.color.g + ',' + cell.color.b + ')';
         }
-        cell.view.style.left = cell.x * 10;
-        cell.view.style.top = cell.y * 10;
+        cell.view.style.left = cell.x * 20;
+        cell.view.style.top = cell.y * 20;
     }
 
     function renderGame(game) {
@@ -391,8 +391,8 @@
             var x = event.clientX;
             var y = event.clientY;
             //TODO remove hardcoded size and position
-            x = Math.floor(x / 10);
-            y = Math.floor(y / 10);
+            x = Math.floor(x / 20);
+            y = Math.floor(y / 20);
             var cellHit = null;
             for (var i = 0; i < game.cells.length; i++) {
                 var cell = game.cells[i];
