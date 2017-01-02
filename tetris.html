@@ -139,6 +139,7 @@
 
     function clearRow(game, row) {
         var i = 0;
+        speedupGame(game);
         while (i<game.cells.length) {
             var cell = game.cells[i];
             if (cell.y < row) {
@@ -155,6 +156,10 @@
                 i++;
             }
         }
+    }
+
+    function speedupGame(game) {
+        game.speed -= 1;
     }
 
     function createCell(game, x, y) {
@@ -226,7 +231,7 @@
     function gameLoop(game) {
         stepGame(game);
         renderGame(game);
-        game.timeout = setTimeout(gameLoop.bind(undefined, game), 500);
+        game.timeout = setTimeout(gameLoop.bind(undefined, game), game.speed);
     }
     
     function playerRotate(game) {
@@ -379,6 +384,43 @@
     var game = generate(9, 21);
     createRandomShape(game);
     gameLoop(game);
+
+    document.body.addEventListener('click',
+        function(event) {
+            console.log(event);
+            var x = event.clientX;
+            var y = event.clientY;
+            //TODO remove hardcoded size and position
+            x = Math.floor(x / 10);
+            y = Math.floor(y / 10);
+            var cellHit = null;
+            for (var i = 0; i < game.cells.length; i++) {
+                var cell = game.cells[i];
+                if (cell.x === x && cell.y) {
+                    cellHit = cell;
+                    break;
+                }
+            }
+            var processedEvent = false;
+            if (cellHit != null && cellHit.active > 0) {
+                playerRotate(game);
+                processedEvent = true;
+            } else if (y > game.rotationCenterY + 1) {
+                playerSpeedup(game);
+                processedEvent = true;
+            } else if (x < game.rotationCenterX - 1) {
+                playerMoveLeft(game);
+                processedEvent = true;
+            } else if (x > game.rotationCenterX + 1) {
+                playerMoveRight(game);
+                processedEvent = true;
+            }
+            if (processedEvent) {
+                event.stopPropagation();
+                renderGame(game);
+            }
+        }
+    );
 
     document.body.addEventListener('keydown', function (event) {
         var processedEvent = false;
